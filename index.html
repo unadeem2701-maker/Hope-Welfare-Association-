@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl" id="app-html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hope Welfare Association — Tando Adam</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .light-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+        .tab-transition {
+            animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-white">
+
+    <!-- LANGUAGE SELECTION MODAL (First Time / Changeable) -->
+    <div id="lang-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-slate-200">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold">
+                <i class="fa-solid fa-language"></i>
+            </div>
+            <h3 id="modal-title" class="text-lg font-bold text-slate-900">App Language / زبان منتخب کریں</h3>
+            <p id="modal-desc" class="text-xs text-slate-600">Please choose your preferred language. You can change this anytime.</p>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="setAppLanguage('ur')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-2xl text-sm transition shadow">
+                    اردو (Urdu)
+                </button>
+                <button onclick="setAppLanguage('en')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-2xl text-sm transition shadow">
+                    English
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP STICKY APP HEADER -->
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-4 py-3">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-amber-500/10 p-1 border border-amber-500/30 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 200 200" class="w-full h-full">
+                        <circle cx="135" cy="48" r="14" fill="#d97706"/>
+                        <g stroke="#d97706" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="135" y1="26" x2="135" y2="30"/><line x1="135" y1="66" x2="135" y2="70"/>
+                            <line x1="113" y1="48" x2="117" y2="48"/><line x1="153" y1="48" x2="157" y2="48"/>
+                        </g>
+                        <path d="M65 55 Q75 48 82 55 Q89 45 98 50 Q88 53 82 61 Q75 54 65 55 Z" fill="#142c44"/>
+                        <path d="M100 68 C112 88, 118 105, 100 125 C82 105, 88 88, 100 68 Z" fill="#d97706"/>
+                        <circle cx="100" cy="105" r="34" fill="none" stroke="#5c3a21" stroke-width="3.5" stroke-dasharray="14 4"/>
+                        <path d="M48 85 C42 115, 65 155, 100 168 C82 152, 62 120, 66 85 Z" fill="#7a4b2a"/>
+                        <path d="M55 120 C60 150, 85 172, 118 175 C95 166, 72 145, 70 118 Z" fill="#4a6b3b"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold text-slate-900">Hope Welfare Association</h1>
+                    <p class="text-[11px] text-amber-600 font-semibold" data-i18n="subtitle">Tando Adam (صرف ٹنڈو آدم کے لیے)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Language Toggle Button -->
+                <button onclick="toggleLanguageModal()" class="px-2.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1">
+                    <i class="fa-solid fa-globe"></i> <span id="current-lang-label">UR</span>
+                </button>
+                <a href="https://wa.me/923142822332?text=Assalam-o-Alaikum,%20Hope%20Welfare%20Association%20Tando%20Adam%20ke%20baray%20me%20maloomat%20chahiye." target="_blank" class="flex items-center gap-1 bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs font-bold transition shadow-sm">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    <span data-i18n="whatsapp_btn">رابطہ</span>
+                </a>
+                <button onclick="syncWithCloud(true)" class="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                    <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="max-w-3xl mx-auto w-full px-4 pt-5 pb-28">
+
+        <!-- TAB 1: HOME DASHBOARD -->
+        <section id="view-home" class="tab-transition space-y-6">
+            <div class="relative rounded-3xl overflow-hidden light-card p-6 sm:p-8 border-t-4 border-amber-500 shadow-lg">
+                <div class="relative z-10 space-y-3">
+                    <span class="inline-block bg-amber-500/10 text-amber-700 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/25" data-i18n="badge_exclusive">
+                        خصوصاً ٹنڈو آدم کے مستحقین کے لیے
+                    </span>
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-900 leading-relaxed" data-i18n="hero_title">
+                        انسانیت کی خدمت، ٹنڈو آدم کی آواز — یونائیٹڈ تھرو سٹرگل
+                    </h2>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-loose" data-i18n="hero_desc">
+                        Hope Welfare Association کا مقصد صرف اور صرف ٹنڈو آدم کے غریب اور مستحق خاندانوں کی مدد کرنا ہے۔ صاف پانی، راشن اور روزگار کی فراہمی ہماری اولین ترجیح ہے۔
+                    </p>
+                    <div class="pt-2 flex gap-3">
+                        <button onclick="switchTab('schemes')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow transition" data-i18n="btn_schemes">
+                            جاری اسکیمیں دیکھیں
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Active Scheme Banner -->
+            <div class="light-card rounded-2xl p-4 border-r-4 border-emerald-500 flex items-start gap-3.5" id="scheme-card-wrapper">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-1">
+                    <i class="fa-solid fa-bullhorn"></i>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-emerald-600 uppercase" data-i18n="active_scheme_label">موجودہ جاری اسکیم</span>
+                    <h3 id="home-current-scheme-title" class="text-sm font-bold text-slate-900 mt-1">مستحق خواتین کے لیے 10 سلائی مشینز</h3>
+                    <p id="home-current-scheme-desc" class="text-xs text-slate-600 mt-1 leading-loose">
+                        Hope Welfare Association کی طرف سے ٹنڈو آدم کی مستحق خواتین میں سلائی مشینز تقسیم کی جا رہی ہیں۔
+                    </p>
+                </div>
+            </div>
+
+            <!-- Impact Statistics -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div class="light-card p-5 rounded-2xl text-center border-b-4 border-blue-500">
+                    <p class="text-xs text-blue-600 font-bold" data-i18n="stat_water_title">پانی سب کے لیے</p>
+                    <h4 id="display-handpumps" class="text-2xl font-bold text-slate-900 mt-1">100+</h4>
+                    <p class="text-[11px] text-slate-500 mt-1" data-i18n="stat_water_sub">ہینڈ پمپس لگائے گئے</p>
+                </div>
+                <div class="light-card p-5 rounded-2xl text-center border-b-4 border-amber-500">
+                    <p class="text-xs text-amber-600 font-bold" data-i18n="stat_ramzan_title">رمضان 2026 ڈرائیو</p>
+                    <h4 id="display-rashan" class="text-2xl font-bold text-slate-900 mt-1">140</h4>
+                    <p class="text-[11px] text-slate-500 mt-1" data-i18n="stat_ramzan_sub">راشن پیکٹس تقسیم</p>
+                </div>
+                <div class="light-card p-5 rounded-2xl text-center border-b-4 border-emerald-500">
+                    <p class="text-xs text-emerald-600 font-bold" data-i18n="stat_current_title">موجودہ اسکیم</p>
+                    <h4 id="display-machines" class="text-2xl font-bold text-slate-900 mt-1">10</h4>
+                    <p class="text-[11px] text-slate-500 mt-1" data-i18n="stat_current_sub">سلائی مشینز</p>
+                </div>
+            </div>
+
+            <!-- Daily Quote Highlight -->
+            <div class="light-card rounded-2xl p-6 text-center space-y-2 border border-amber-200 bg-amber-50/40">
+                <span class="text-[10px] font-bold text-amber-700" data-i18n="quote_tag">پیغامِ انسانیت</span>
+                <p id="display-quote" class="text-sm sm:text-base text-slate-800 leading-loose italic">
+                    "انسانیت کی خدمت ہی سب سے بہترین عبادت ہے۔ صرف اور صرف ٹنڈو آدم کے مستحق لوگوں کے لیے۔"
+                </p>
+            </div>
+        </section>
+
+        <!-- TAB 2: WELFARE SCHEMES -->
+        <section id="view-schemes" class="hidden tab-transition space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-slate-900" data-i18n="schemes_heading">فلاحی اسکیمیں (ٹنڈو آدم)</h2>
+            </div>
+
+            <div class="light-card rounded-3xl p-6 space-y-3 border-r-4 border-emerald-500" id="scheme-page-wrapper">
+                <span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-3 py-1 rounded-full" data-i18n="badge_active_scheme">جاری اسکیم</span>
+                <h3 class="text-base font-bold text-slate-900">مستحق خواتین کے لیے سلائی مشینز</h3>
+                <p id="scheme-page-current-desc" class="text-xs text-slate-600 leading-loose">
+                    ٹنڈو آدم کی مستحق اور غریب خواتین کو خود کفیل بنانے کے لیے 10 سلائی مشینز کی تقسیم کا عمل جاری ہے۔
+                </p>
+            </div>
+
+            <div id="dynamic-schemes-container" class="space-y-4">
+                <h3 class="text-xs font-bold text-slate-500" data-i18n="completed_heading">مکمل شدہ اہم پروجیکٹس</h3>
+                <div class="light-card rounded-2xl p-4 border-r-4 border-blue-500 space-y-1">
+                    <h4 class="text-sm font-bold text-slate-900">100+ ہینڈ پمپس کی تنصیب</h4>
+                    <p class="text-xs text-slate-600 leading-loose">ٹنڈو آدم کے مختلف پسماندہ علاقوں میں صاف پانی کی فراہمی کے لیے 100 سے زائد ہینڈ پمپس لگائے جا چکے ہیں۔</p>
+                </div>
+                <div class="light-card rounded-2xl p-4 border-r-4 border-amber-500 space-y-1">
+                    <h4 class="text-sm font-bold text-slate-900">رمضان 2026 راشن مہم (140 پیکٹس)</h4>
+                    <p class="text-xs text-slate-600 leading-loose">رمضان المبارک کے بابرکت مہینے میں 140 مستحق خاندانوں میں باعزت طریقے سے راشن تقسیم کیا گیا۔</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: QUOTES -->
+        <section id="view-quotes" class="hidden tab-transition space-y-5">
+            <h2 class="text-lg font-bold text-slate-900" data-i18n="quotes_heading">سنہری اقوال و پیغامات</h2>
+            <div id="quotes-list" class="space-y-4">
+                <div class="light-card p-5 rounded-2xl border-r-4 border-amber-500 space-y-2">
+                    <p class="text-sm text-slate-800 leading-loose">"بہترین انسان وہ ہے جو دوسروں کے کام آئے، اور خدمتِ خلق ہی اصل زندگی ہے۔"</p>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                        <span>Hope Welfare Association</span>
+                        <button onclick="copyQuote(this)" class="text-amber-600 font-bold hover:underline" data-i18n="copy_btn">کاپی کریں</button>
+                    </div>
+                </div>
+                <div class="light-card p-5 rounded-2xl border-r-4 border-emerald-500 space-y-2">
+                    <p class="text-sm text-slate-800 leading-loose">"کسی پیاسے کو پانی پلانا اور کسی مستحق کے گھر کا چولہا جلانا دنیا و آخرت کی سب سے بڑی کامیابی ہے۔"</p>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                        <span>پانی سب کے لیے مشن</span>
+                        <button onclick="copyQuote(this)" class="text-amber-600 font-bold hover:underline" data-i18n="copy_btn">کاپی کریں</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: ADMIN PANEL -->
+        <section id="view-admin" class="hidden tab-transition space-y-6">
+            <div class="light-card rounded-3xl p-6 border-t-4 border-amber-500">
+                <h2 class="text-base font-bold text-slate-900 mb-2" data-i18n="admin_heading">ایڈمن لائیو کنٹرول پینل</h2>
+                
+                <div id="admin-lock-screen" class="space-y-3">
+                    <p class="text-xs text-slate-600 leading-loose" data-i18n="admin_lock_desc">یہ حصہ صرف ایڈمن کے لیے ہے۔ سیکیور پاس ورڈ درج کریں۔</p>
+                    <input type="password" id="admin-pin-input" placeholder="ایڈمن پاس ورڈ درج کریں" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 outline-none focus:border-amber-500">
+                    <button onclick="unlockAdmin()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl text-xs transition" data-i18n="admin_login_btn">
+                        لاگ ان کریں
+                    </button>
+                </div>
+
+                <div id="admin-editor-screen" class="hidden space-y-4 pt-2">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">کل ہینڈ پمپس</label>
+                            <input type="text" id="edit-handpumps" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">رمضان راشن پیکٹس</label>
+                            <input type="text" id="edit-rashan" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">موجودہ اسکیم کی تفصیل</label>
+                        <textarea id="edit-current-scheme" rows="3" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">مرکزی قول / پیغام</label>
+                        <textarea id="edit-quote" rows="2" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"></textarea>
+                    </div>
+
+                    <!-- Add New Scheme -->
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+                        <h3 class="text-xs font-bold text-amber-700">نئی اسکیم شامل کریں</h3>
+                        <input type="text" id="new-scheme-title" placeholder="اسکیم کا عنوان" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none">
+                        <textarea id="new-scheme-desc" rows="2" placeholder="تفصیل..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none"></textarea>
+                        <button onclick="addNewScheme()" class="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-bold">اسکیم لسٹ میں جوڑیں</button>
+                    </div>
+
+                    <button onclick="pushLiveUpdate()" id="publish-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs transition shadow" data-i18n="admin_publish_btn">
+                        تبدیلیاں لائیو پبلش کریں (تمام ایپس کے لیے)
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- BOTTOM MOBILE NAVIGATION BAR -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-2 py-2">
+        <div class="max-w-3xl mx-auto grid grid-cols-4 gap-1 text-center">
+            <button onclick="switchTab('home')" id="nav-home" class="py-1 rounded-xl text-amber-600 bg-amber-50 font-bold text-xs transition">
+                <i class="fa-solid fa-house block text-sm mb-0.5"></i> <span data-i18n="nav_home">ہوم</span>
+            </button>
+            <button onclick="switchTab('schemes')" id="nav-schemes" class="py-1 rounded-xl text-slate-600 font-bold text-xs transition">
+                <i class="fa-solid fa-hand-holding-heart block text-sm mb-0.5"></i> <span data-i18n="nav_schemes">اسکیمیں</span>
+            </button>
+            <button onclick="switchTab('quotes')" id="nav-quotes" class="py-1 rounded-xl text-slate-600 font-bold text-xs transition">
+                <i class="fa-solid fa-quote-left block text-sm mb-0.5"></i> <span data-i18n="nav_quotes">اقوال</span>
+            </button>
+            <button onclick="switchTab('admin')" id="nav-admin" class="py-1 rounded-xl text-slate-600 font-bold text-xs transition">
+                <i class="fa-solid fa-sliders block text-sm mb-0.5"></i> <span data-i18n="nav_admin">ایڈمن</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 hidden bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">
+        <span id="toast-msg">پیغام</span>
+    </div>
+
+    <!-- JAVASCRIPT ENGINE & I18N -->
+    <script>
+        const SUPABASE_URL = 'https://uoahcfcxvmpakinqpbxn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_aq9I23QcT-L_J-sl49ThCg_P31MCyFd'; 
+
+        let supabaseClient = null;
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {}
+
+        // Translations Dictionary
+        const translations = {
+            ur: {
+                subtitle: "Tando Adam (صرف ٹنڈو آدم کے لیے)",
+                whatsapp_btn: "رابطہ",
+                badge_exclusive: "خصوصاً ٹنڈو آدم کے مستحقین کے لیے",
+                hero_title: "انسانیت کی خدمت، ٹنڈو آدم کی آواز — یونائیٹڈ تھرو سٹرگل",
+                hero_desc: "Hope Welfare Association کا مقصد صرف اور صرف ٹنڈو آدم کے غریب اور مستحق خاندانوں کی مدد کرنا ہے۔ صاف پانی، راشن اور روزگار کی فراہمی ہماری اولین ترجیح ہے۔",
+                btn_schemes: "جاری اسکیمیں دیکھیں",
+                active_scheme_label: "موجودہ جاری اسکیم",
+                stat_water_title: "پانی سب کے لیے",
+                stat_water_sub: "ہینڈ پمپس لگائے گئے",
+                stat_ramzan_title: "رمضان 2026 ڈرائیو",
+                stat_ramzan_sub: "راشن پیکٹس تقسیم",
+                stat_current_title: "موجودہ اسکیم",
+                stat_current_sub: "سلائی مشینز",
+                quote_tag: "پیغامِ انسانیت",
+                schemes_heading: "فلاحی اسکیمیں (ٹنڈو آدم)",
+                badge_active_scheme: "جاری اسکیم",
+                completed_heading: "مکمل شدہ اہم پروجیکٹس",
+                quotes_heading: "سنہری اقوال و پیغامات",
+                copy_btn: "کاپی کریں",
+                admin_heading: "ایڈمن لائیو کنٹرول پینل",
+                admin_lock_desc: "یہ حصہ صرف ایڈمن کے لیے ہے۔ سیکیور پاس ورڈ درج کریں۔",
+                admin_login_btn: "لاگ ان کریں",
+                admin_publish_btn: "تبدیلیاں لائیو پبلش کریں (تمام ایپس کے لیے)",
+                nav_home: "ہوم",
+                nav_schemes: "اسکیمیں",
+                nav_quotes: "اقوال",
+                nav_admin: "ایڈمن"
+            },
+            en: {
+                subtitle: "Tando Adam (Exclusively for Tando Adam)",
+                whatsapp_btn: "Contact",
+                badge_exclusive: "Exclusively for Deserving People of Tando Adam",
+                hero_title: "Serving Humanity, Voice of Tando Adam — United Through Struggle",
+                hero_desc: "Hope Welfare Association is dedicated solely to helping poor and deserving families in Tando Adam. Clean water, ration, and livelihoods are our top priorities.",
+                btn_schemes: "View Active Schemes",
+                active_scheme_label: "Current Active Scheme",
+                stat_water_title: "Water For All",
+                stat_water_sub: "Handpumps Installed",
+                stat_ramzan_title: "Ramzan 2026 Drive",
+                stat_ramzan_sub: "Ration Packs Distributed",
+                stat_current_title: "Current Scheme",
+                stat_current_sub: "Sewing Machines",
+                quote_tag: "Message of Humanity",
+                schemes_heading: "Welfare Schemes (Tando Adam)",
+                badge_active_scheme: "Active Scheme",
+                completed_heading: "Completed Key Projects",
+                quotes_heading: "Golden Quotes & Messages",
+                copy_btn: "Copy",
+                admin_heading: "Admin Live Control Panel",
+                admin_lock_desc: "This section is for Admin only. Enter secure password.",
+                admin_login_btn: "Login",
+                admin_publish_btn: "Publish Live Updates (For All Apps)",
+                nav_home: "Home",
+                nav_schemes: "Schemes",
+                nav_quotes: "Quotes",
+                nav_admin: "Admin"
+            }
+        };
+
+        let currentLang = localStorage.getItem('hope_app_lang') || '';
+
+        function checkLanguage() {
+            if (!currentLang) {
+                document.getElementById('lang-modal').classList.remove('hidden');
+            } else {
+                applyLanguage(currentLang);
+            }
+        }
+
+        function toggleLanguageModal() {
+            document.getElementById('lang-modal').classList.remove('hidden');
+        }
+
+        function setAppLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('hope_app_lang', lang);
+            document.getElementById('lang-modal').classList.add('hidden');
+            applyLanguage(lang);
+            showToast(lang === 'ur' ? "زبان اردو کر دی گئی ہے" : "Language changed to English");
+        }
+
+        function applyLanguage(lang) {
+            const htmlTag = document.getElementById('app-html');
+            htmlTag.setAttribute('lang', lang);
+            htmlTag.setAttribute('dir', lang === 'ur' ? 'rtl' : 'ltr');
+            document.getElementById('current-lang-label').innerText = lang.toUpperCase();
+
+            const dict = translations[lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    el.innerText = dict[key];
+                }
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function switchTab(tab) {
+            ['home', 'schemes', 'quotes', 'admin'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = 'py-1 rounded-xl text-slate-600 font-bold text-xs transition';
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).className = 'py-1 rounded-xl text-amber-600 bg-amber-50 font-bold text-xs transition';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copyQuote(btn) {
+            const text = btn.closest('.light-card').querySelector('p').innerText;
+            navigator.clipboard.writeText(text);
+            showToast(currentLang === 'ur' ? "قول کاپی ہو گیا!" : "Quote copied!");
+        }
+
+        async function syncWithCloud(manual = false) {
+            const icon = document.getElementById('sync-icon');
+            icon.classList.add('fa-spin');
+            if (!supabaseClient) { icon.classList.remove('fa-spin'); return; }
+
+            try {
+                const { data } = await supabaseClient.from('welfare_data').select('*').limit(1).single();
+                if (data) {
+                    if (data.handpumps) document.getElementById('display-handpumps').innerText = data.handpumps;
+                    if (data.rashan) document.getElementById('display-rashan').innerText = data.rashan;
+                    if (data.current_scheme) {
+                        document.getElementById('home-current-scheme-desc').innerText = data.current_scheme;
+                        document.getElementById('scheme-page-current-desc').innerText = data.current_scheme;
+                    }
+                    if (data.quotes) document.getElementById('display-quote').innerText = `"${data.quotes}"`;
+                    if (manual) showToast(currentLang === 'ur' ? "ڈیٹا سنک ہو گیا!" : "Data synced!");
+                }
+            } catch (e) {}
+            icon.classList.remove('fa-spin');
+        }
+
+        const ADMIN_SECURE_PIN = "HopeAdmin@2026_Secure#TandoAdam";
+
+        function unlockAdmin() {
+            const pin = document.getElementById('admin-pin-input').value.trim();
+            if (pin === ADMIN_SECURE_PIN) {
+                document.getElementById('admin-lock-screen').classList.add('hidden');
+                document.getElementById('admin-editor-screen').classList.remove('hidden');
+                
+                document.getElementById('edit-handpumps').value = document.getElementById('display-handpumps').innerText;
+                document.getElementById('edit-rashan').value = document.getElementById('display-rashan').innerText;
+                document.getElementById('edit-current-scheme').value = document.getElementById('home-current-scheme-desc').innerText.trim();
+                document.getElementById('edit-quote').value = document.getElementById('display-quote').innerText.replace(/^"|"$/g, '').trim();
+                showToast("Welcome Admin!");
+            } else {
+                showToast("Incorrect Password!");
+            }
+        }
+
+        function addNewScheme() {
+            const title = document.getElementById('new-scheme-title').value.trim();
+            const desc = document.getElementById('new-scheme-desc').value.trim();
+            if(!title || !desc) { alert("Title & Description required."); return; }
+            
+            const container = document.getElementById('dynamic-schemes-container');
+            const card = document.createElement('div');
+            card.className = "light-card rounded-2xl p-4 border-r-4 border-purple-500 space-y-1";
+            card.innerHTML = `<h4 class="text-sm font-bold text-slate-900">${title}</h4><p class="text-xs text-slate-600 leading-loose">${desc}</p>`;
+            container.appendChild(card);
+            document.getElementById('new-scheme-title').value = '';
+            document.getElementById('new-scheme-desc').value = '';
+            showToast("Scheme added!");
+        }
+
+        async function pushLiveUpdate() {
+            const btn = document.getElementById('publish-btn');
+            btn.innerText = "Publishing...";
+            btn.disabled = true;
+
+            const handpumps = document.getElementById('edit-handpumps').value.trim();
+            const rashan = document.getElementById('edit-rashan').value.trim();
+            const current_scheme = document.getElementById('edit-current-scheme').value.trim();
+            const quotes = document.getElementById('edit-quote').value.trim();
+
+            try {
+                const { error } = await supabaseClient.from('welfare_data').update({
+                    handpumps, rashan, current_scheme, quotes
+                }).eq('id', 1);
+
+                if (error) alert("Error: " + error.message);
+                else {
+                    showToast("Published to all APKs successfully!");
+                    await syncWithCloud(false);
+                    switchTab('home');
+                }
+            } catch (e) {
+                alert("Check network connection.");
+            } finally {
+                btn.innerText = "Publish Live Updates (For All Apps)";
+                btn.disabled = false;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => { 
+            checkLanguage();
+            syncWithCloud(false); 
+        });
+    </script>
+</body>
+</html>
